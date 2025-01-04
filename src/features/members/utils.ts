@@ -24,3 +24,21 @@ export const getMember = async ({
 
   return documentMembers.documents[0];
 }
+
+interface GetMembersParams {
+  databases: Databases;
+  workspaceId: string;
+}
+
+export const getMembers = async ({
+  databases,
+  workspaceId
+}: GetMembersParams) => {
+  const documentMembers = await databases.listDocuments(
+    DATABASE_ID,
+    MEMBERS_ID,
+    [Query.equal("workspaceId", workspaceId)]
+  );
+
+  return documentMembers.documents;
+}

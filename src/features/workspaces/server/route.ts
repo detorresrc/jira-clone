@@ -8,7 +8,8 @@ import { createWorkspaceSchema, updateWorkspaceSchema } from "../schema";
 import { sessionMiddleware } from "@/lib/middlewares/session-middleware";
 import { MemberRole } from "@/features/members/types";
 import { generateInviteCode } from "@/lib/utils";
-import { getMember } from "@/features/members/utils";
+import { getMember, getMembers } from "@/features/members/utils";
+import { getWorkspace } from "./queries";
 
 const app = new Hono()
   .get(
@@ -65,6 +66,7 @@ const app = new Hono()
       const user = c.get("user");
 
       let uploadedImageUrl: string | undefined;
+      let imageId: string | undefined;
 
       if(imageUrl instanceof File){
         const file = await storage.createFile(
@@ -72,6 +74,7 @@ const app = new Hono()
           ID.unique(),
           imageUrl
         );
+        console.log({file});
 
         const arrayBuffer = await storage.getFilePreview(
           IMAGES_BUCKET_ID,
@@ -79,6 +82,7 @@ const app = new Hono()
         );
 
         uploadedImageUrl = `data:image/png;base64,${Buffer.from(arrayBuffer).toString("base64")}`;
+        imageId = file.$id;
       }
 
       const workspace = await databases.createDocument(
@@ -87,9 +91,10 @@ const app = new Hono()
         ID.unique(),
         {
           name,
+          imageId,
           userId: user.$id,
           imageUrl: uploadedImageUrl,
-          inviteCode: generateInviteCode(10)
+          inviteCode: generateInviteCode(10),
         }
       );
 
@@ -130,7 +135,7 @@ const app = new Hono()
       if(!member || member.role !== MemberRole.ADMIN)
         return c.json({
           error: "You are not allowed to update this workspace"
-        }, 403);
+        }, 401);
 
       let uploadedImageUrl: string | undefined;
       if(imageUrl instanceof File){
@@ -162,6 +167,113 @@ const app = new Hono()
       
       return c.json({
         data: workspace
+      });
+    }
+  )
+  .delete(
+    "/:workspaceId",
+    sessionMiddleware,
+    async (c) => {
+      const { workspaceId } = c.req.param();
+      const databases = c.get("databases");
+      const storage = c.get("storage");
+      const user = c.get("user");
+
+      const member = await getMember({
+        databases,
+        userId: user.$id,
+        workspaceId
+      });
+      if(!member || member.role !== MemberRole.ADMIN)
+        return c.json({
+          error: "You are not allowed to delete this workspace"
+        }, 401);
+
+      const workspace = await getWorkspace({
+        workspaceId
+      });
+      if(!workspace)
+        return c.json({
+          error: "Workspace not found"
+        }, 404);
+
+      // TODO: Delete projects, and tasks
+      
+      // Delete Members
+      const membersIds = (await getMembers({
+        databases,
+        workspaceId
+      })).map((doc) => doc.$id);
+      if(membersIds){
+        for(const memberId of membersIds){
+          await databases.deleteDocument(
+            DATABASE_ID,
+            MEMBERS_ID,
+            memberId
+          );
+        }
+      }
+
+      // Delete Bucket
+      if(workspace.imageId)
+        await storage.deleteFile(IMAGES_BUCKET_ID, workspace.imageId);
+
+      // Delete Workspace
+      await databases.deleteDocument(
+        DATABASE_ID,
+        WORKSPACE_ID,
+        workspaceId
+      );
+
+      return c.json({
+        data: {
+          $id: workspaceId
+        }
+      });
+    }
+  )
+  .post(
+    "/:workspaceId/reset-invite-code",
+    sessionMiddleware,
+    async (c) => {
+      const { workspaceId } = c.req.param();
+      const databases = c.get("databases");
+      const user = c.get("user");
+
+      const member = await getMember({
+        databases,
+        userId: user.$id,
+        workspaceId
+      });
+      if(!member || member.role !== MemberRole.ADMIN)
+        return c.json({
+          error: "You are not allowed to reset the invite code"
+        }, 401);
+
+      const workspace = await getWorkspace({
+        workspaceId
+      });
+      if(!workspace)
+        return c.json({
+          error: "Workspace not found"
+        }, 404);
+
+      const inviteCode = generateInviteCode(10);
+
+      await databases.updateDocument(
+        DATABASE_ID,
+        WORKSPACE_ID,
+        workspaceId,
+        {
+          inviteCode
+        }
+      );
+
+      return c.json({
+        data: {
+          inviteCode,
+          workspace
+        }
       });
     }
   );

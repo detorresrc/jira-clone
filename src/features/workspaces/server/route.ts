@@ -1,10 +1,13 @@
 import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
-import { createWorkspaceSchema } from "../schema";
-import { sessionMiddleware } from "@/lib/middlewares/session-middleware";
+
 import { DATABASE_ID, IMAGES_BUCKET_ID, MEMBERS_ID, WORKSPACE_ID } from "@/config";
 import { ID, Query } from "node-appwrite";
+
+import { createWorkspaceSchema } from "../schema";
+import { sessionMiddleware } from "@/lib/middlewares/session-middleware";
 import { MemberRole } from "@/features/members/types";
+import { generateInviteCode } from "@/lib/utils";
 
 const app = new Hono()
   .get(
@@ -84,7 +87,8 @@ const app = new Hono()
         {
           name,
           userId: user.$id,
-          imageUrl: uploadedImageUrl
+          imageUrl: uploadedImageUrl,
+          inviteCode: generateInviteCode(10)
         }
       );
 

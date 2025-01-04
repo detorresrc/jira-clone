@@ -9,7 +9,7 @@ export const CreateWorkspaceModal = () => {
   
   return (
     <ResponsiveModal open={isOpen} onOpenChange={setIsOpen}>
-      <CreateWorkspaceForm onCancel={() => close()}/>
+      <CreateWorkspaceForm onCancel={close}/>
     </ResponsiveModal>
   );
 };

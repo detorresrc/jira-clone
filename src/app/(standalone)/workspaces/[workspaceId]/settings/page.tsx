@@ -1,6 +1,6 @@
-import { getCurrentUser } from "@/features/auth/actions";
+import { getCurrentUser } from "@/features/auth/server/queries";
 import { EditWorkspaceForm } from "@/features/workspaces/components/edit-workspace-form";
-import { getWorkspace } from "@/features/workspaces/server/actions";
+import { getWorkspace } from "@/features/workspaces/server/queries";
 import { redirect } from "next/navigation";
 
 interface WorkspaceIdSettingsPage {

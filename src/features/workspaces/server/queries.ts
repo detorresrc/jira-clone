@@ -1,28 +1,15 @@
 "use server"
 
-import { cookies } from "next/headers";
-import { Account, Client, Databases, Query } from "node-appwrite";
-import { AUTH_COOKIE } from "@/features/auth/constants";
+import { Query } from "node-appwrite";
+
 import { DATABASE_ID, MEMBERS_ID, WORKSPACE_ID } from "@/config";
-import { getAppWriteClient } from "@/lib/utils";
 import { getMember } from "@/features/members/utils";
 import { Workspace } from "../types";
+import { createSessionClient } from "@/lib/server/appwrite";
 
 export const getWorkspaces = async () => {
   try {
-    const client = getAppWriteClient();
-
-    const session = (await cookies()).get(AUTH_COOKIE);
-
-    if (!session)
-      return {
-        documents: [],
-        total: 0
-      };
-
-    client.setSession(session.value);
-    const databases = new Databases(client);
-    const account = new Account(client);
+    const { databases, account } = await createSessionClient();
 
     const user = await account.get();
 
@@ -63,16 +50,7 @@ interface GetWorkspaceProps {
 }
 export const getWorkspace = async ({ workspaceId } : GetWorkspaceProps) => {
   try {
-    const client = getAppWriteClient();
-
-    const session = (await cookies()).get(AUTH_COOKIE);
-
-    if (!session)
-      return null;
-
-    client.setSession(session.value);
-    const databases = new Databases(client);
-    const account = new Account(client);
+    const { databases, account } = await createSessionClient();
 
     const user = await account.get();
 

@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { CreateWorkspaceSchema, createWorkspaceSchema } from "../schema";
 import { useForm } from "react-hook-form";
 import React, { useRef } from "react";
-import Image from 'next/image'
+import Image from "next/image";
 import { ImageIcon } from "lucide-react";
 
 import {
@@ -48,20 +48,23 @@ export const CreateWorkspaceForm = ({ onCancel }: CreateWorkspaceFormProps) => {
       image: data.imageUrl instanceof File ? data.imageUrl : undefined,
     };
 
-    mutate({ form: finalValues }, {
-      onSuccess: ({data}) => {
-        form.reset();
-        router.push(`/workspaces/${data.$id}`);
-      },
-    });
+    mutate(
+      { form: finalValues },
+      {
+        onSuccess: ({ data }) => {
+          form.reset();
+          router.push(`/workspaces/${data.$id}`);
+        },
+      }
+    );
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if(file) {
+    if (file) {
       form.setValue("imageUrl", file);
     }
-  }
+  };
 
   return (
     <Card className='w-full h-full border-none shadow-none'>
@@ -97,62 +100,67 @@ export const CreateWorkspaceForm = ({ onCancel }: CreateWorkspaceFormProps) => {
                 control={form.control}
                 name='imageUrl'
                 render={({ field }) => (
-                  <div className="flex flex-col gap-y-2">
-                    <div className="flex items-center gap-x-5">
+                  <div className='flex flex-col gap-y-2'>
+                    <div className='flex items-center gap-x-5'>
                       {field.value ? (
-                        <div className="size-[72px] relative rounded-md overflow-hidden">
+                        <div className='size-[72px] relative rounded-md overflow-hidden'>
                           <Image
-                            alt="Workspace Image"
+                            alt='Workspace Image'
                             fill
-                            className="object-cover"
+                            className='object-cover'
                             src={
                               field.value instanceof File
                                 ? URL.createObjectURL(field.value)
                                 : field.value
                             }
-                            />
+                          />
                         </div>
-                      ): (
-                        <Avatar className="size-[72px]">
+                      ) : (
+                        <Avatar className='size-[72px]'>
                           <AvatarFallback>
-                            <ImageIcon className="size-[36px] text-neutral-400"/>
+                            <ImageIcon className='size-[36px] text-neutral-400' />
                           </AvatarFallback>
                         </Avatar>
                       )}
-                      <div className="flex flex-col">
-                        <p className="text-sm">Workspace Icon</p>
-                        <p className="text-sm text-muted-foreground">JPG, PNG, SVG or JPEG and max 1mb</p>
+                      <div className='flex flex-col'>
+                        <p className='text-sm'>Workspace Icon</p>
+                        <p className='text-sm text-muted-foreground'>
+                          JPG, PNG, SVG or JPEG and max 1mb
+                        </p>
                         <input
-                          type="file"
-                          className="hidden" 
-                          accept=".jpg, .png, .jpeg, .svg" 
-                          ref={inputRef} 
-                          disabled={isPending} 
-                          onChange={handleImageChange}/>
+                          type='file'
+                          className='hidden'
+                          accept='.jpg, .png, .jpeg, .svg'
+                          ref={inputRef}
+                          disabled={isPending}
+                          onChange={handleImageChange}
+                        />
                         {field.value ? (
                           <Button
-                            type="button"
+                            type='button'
                             disabled={isPending}
                             variant={"destructive"}
                             size={"xs"}
-                            className="w-fit mt-2"
+                            className='w-fit mt-2'
                             onClick={() => {
                               field.onChange(null);
-                              if(inputRef.current) {
+                              if (inputRef.current) {
                                 inputRef.current.value = "";
                               }
-                            }}>
-                              Remove Image
+                            }}
+                          >
+                            Remove Image
                           </Button>
                         ) : (
                           <Button
-                            type="button"
+                            type='button'
                             disabled={isPending}
                             variant={"teritary"}
                             size={"xs"}
-                            className="w-fit mt-2"
-                            onClick={() => inputRef.current?.click()}>
-                              Upload Image
+                            className='w-fit mt-2'
+                            onClick={() => inputRef.current?.click()}
+                          >
+                            Upload Image
                           </Button>
                         )}
                       </div>
@@ -161,7 +169,7 @@ export const CreateWorkspaceForm = ({ onCancel }: CreateWorkspaceFormProps) => {
                 )}
               />
             </div>
-            
+
             <DottedSeparator className='py-7' />
 
             <div className='flex items-center justify-between'>

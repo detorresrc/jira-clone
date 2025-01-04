@@ -1,4 +1,4 @@
-import { getCurrentUser } from '@/features/auth/actions';
+import { getCurrentUser } from '@/features/auth/server/queries';
 import { SignInCard } from '@/features/auth/components/sign-in-card'
 import { redirect } from 'next/navigation';
 import React from 'react'

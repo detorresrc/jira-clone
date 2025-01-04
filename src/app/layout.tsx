@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google"
+import { NuqsAdapter } from 'nuqs/adapters/next/app'
 
 import { cn } from "@/lib/utils";
 import "./globals.css";
@@ -27,7 +28,9 @@ export default function RootLayout({
       >
         <QueryProviders>
           <Toaster />
-          {children}
+          <NuqsAdapter>
+            {children}
+          </NuqsAdapter>
         </QueryProviders>
       </body>
     </html>

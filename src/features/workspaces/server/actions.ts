@@ -4,12 +4,11 @@ import { cookies } from "next/headers";
 import { Account, Client, Databases, Query } from "node-appwrite";
 import { AUTH_COOKIE } from "@/features/auth/constants";
 import { DATABASE_ID, MEMBERS_ID, WORKSPACE_ID } from "@/config";
+import { getAppWriteClient } from "@/lib/utils";
 
 export const getWorkspaces = async () => {
   try {
-    const client = new Client()
-      .setEndpoint(process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT!)
-      .setProject(process.env.NEXT_PUBLIC_APPWRITE_PROJECT!);
+    const client = getAppWriteClient();
 
     const session = (await cookies()).get(AUTH_COOKIE);
 

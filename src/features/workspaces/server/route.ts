@@ -6,6 +6,22 @@ import { DATABASE_ID, IMAGES_BUCKET_ID, WORKSPACE_ID } from "@/config";
 import { ID } from "node-appwrite";
 
 const app = new Hono()
+  .get(
+    "/",
+    sessionMiddleware,
+    async (c) => {
+      const databases = c.get("databases");
+
+      const workspaces = await databases.listDocuments(
+        DATABASE_ID,
+        WORKSPACE_ID
+      );
+
+      return c.json({
+        data: workspaces
+      });
+    }
+  )
   .post(
     "/",
     sessionMiddleware,

@@ -28,7 +28,7 @@ export const useLogin = () => {
     },
     onSuccess: () => {
       router.refresh();
-      queryClient.invalidateQueries({queryKey: ["current-session"]});
+      queryClient.invalidateQueries();
     },
     onError: (error) => {
       console.error(error);

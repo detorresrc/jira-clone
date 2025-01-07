@@ -5,11 +5,10 @@ import { ID, Query } from "node-appwrite";
 
 import { sessionMiddleware } from "@/lib/middlewares/session-middleware";
 import { getMember } from "@/features/members/utils";
-import { DATABASE_ID, IMAGES_BUCKET_ID, PROJECTS_ID, WORKSPACE_ID } from "@/config";
+import { DATABASE_ID, IMAGES_BUCKET_ID, PROJECTS_ID } from "@/config";
 
 import { Project } from "../types";
 import { createProjectSchema } from "../schema";
-import { Workspace } from "@/features/workspaces/types";
 
 const app = new Hono()
   .get(

@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, LoaderCircle, LoaderPinwheel, MoreVerticalIcon } from "lucide-react";
+import { ArrowLeft, LoaderCircle, MoreVerticalIcon } from "lucide-react";
 import Link from "next/link";
 
 import { DottedSeparator } from "@/components/custom/dotted-separator";
@@ -20,7 +20,6 @@ import { useDeleteMember } from "@/features/members/api/use-delete-member";
 import { useUpdateMember } from "@/features/members/api/use-update-member";
 import { MemberRole } from "@/features/members/types";
 import { useConfirm } from "@/hooks/use-confirm";
-import { useRouter } from "next/navigation";
 import { Skeleton } from "@/components/ui/skeleton";
 import { MemberBadge } from "@/features/members/components/member-badge";
 import { User } from "@/features/auth/types";
@@ -31,8 +30,6 @@ interface MembersListProps {
 }
 
 export const MembersList = ({ workspaceId, currentUser }: MembersListProps) => {
-  const router = useRouter();
-
   const { data: members, isLoading: isGettingMembers } = useGetMembers({
     workspaceId,
   });

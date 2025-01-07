@@ -3,6 +3,8 @@ import { SignUpCard } from '@/features/auth/components/sign-up-card'
 import { redirect } from 'next/navigation';
 import React from 'react'
 
+export const dynamic = 'force-dynamic';
+
 const SignUpPage = async () => {
   const user = await getCurrentUser();
 

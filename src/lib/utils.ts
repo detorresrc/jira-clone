@@ -1,5 +1,4 @@
 import { clsx, type ClassValue } from "clsx"
-import { Client } from "node-appwrite";
 import { twMerge } from "tailwind-merge"
 
 export function cn(...inputs: ClassValue[]) {

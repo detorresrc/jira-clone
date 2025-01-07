@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 
 import { getCurrentUser } from "@/features/auth/server/queries";
 import { EditWorkspaceForm } from "@/features/workspaces/components/edit-workspace-form";
-import { getWorkspace } from "@/features/workspaces/server/queries";
+import { getMembersWorkspace } from "@/features/workspaces/server/queries";
 
 interface WorkspaceIdSettingsPage {
   params: Promise<{
@@ -16,7 +16,7 @@ const WorkspaceIdSettingsPage = async ({ params }: WorkspaceIdSettingsPage) => {
 
   const { workspaceId } = await params;
 
-  const workspace = await getWorkspace({ workspaceId });
+  const workspace = await getMembersWorkspace({ workspaceId });
   if (!workspace) redirect("/");
 
   return (

@@ -9,7 +9,8 @@ import { sessionMiddleware } from "@/lib/middlewares/session-middleware";
 import { MemberRole } from "@/features/members/types";
 import { generateInviteCode } from "@/lib/utils";
 import { getMember, getMembers } from "@/features/members/utils";
-import { getWorkspace } from "./queries";
+import { getMembersWorkspace, getWorkspace } from "./queries";
+import { z } from "zod";
 
 const app = new Hono()
   .get(
@@ -189,7 +190,7 @@ const app = new Hono()
           error: "You are not allowed to delete this workspace"
         }, 401);
 
-      const workspace = await getWorkspace({
+      const workspace = await getMembersWorkspace({
         workspaceId
       });
       if(!workspace)
@@ -250,7 +251,7 @@ const app = new Hono()
           error: "You are not allowed to reset the invite code"
         }, 401);
 
-      const workspace = await getWorkspace({
+      const workspace = await getMembersWorkspace({
         workspaceId
       });
       if(!workspace)
@@ -274,6 +275,63 @@ const app = new Hono()
           inviteCode,
           workspace
         }
+      });
+    }
+  )
+  .post(
+    "/:workspaceId/join",
+    sessionMiddleware,
+    zValidator("json", z.object({
+      inviteCode: z.string()
+    })),
+    async (c) => {
+      const { workspaceId } = c.req.param();
+      const { inviteCode } = c.req.valid("json");
+
+      const databases = c.get("databases");
+      const user = c.get("user");
+
+      const member = await getMember({
+        databases,
+        userId: user.$id,
+        workspaceId
+      });
+
+      if(member){
+        return c.json({
+          error: "You are already a member of this workspace"
+        }, 400);
+      }// if(member)
+
+      const workspace = await getWorkspace({
+        workspaceId
+      });
+
+      if(!workspace){
+        return c.json({
+          error: "Workspace not found"
+        }, 404);
+      }// if(!workspace)
+
+      if(workspace.inviteCode !== inviteCode){
+        return c.json({
+          error: "Invalid invite code"
+        }, 400);
+      }// if(workspace.inviteCode !== inviteCode)
+
+      await databases.createDocument(
+        DATABASE_ID,
+        MEMBERS_ID,
+        ID.unique(),
+        {
+          userId: user.$id,
+          workspaceId,
+          role: MemberRole.MEMBER
+        }
+      );
+
+      return c.json({
+        data: workspace
       });
     }
   );

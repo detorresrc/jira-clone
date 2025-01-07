@@ -36,7 +36,11 @@ export const WorkspaceSwitcher = () => {
         />
       </div>
       {isPending ? (
-        <Skeleton className='w-full h-10'/>
+        <div className="flex items-center space-x-1">
+          <Skeleton className='w-12 h-10 rounded-md'/>
+          <Skeleton className='w-full h-10'/>
+        </div>
+        
       ) : (
         <Select onValueChange={onSelect} value={workspaceId}>
           <SelectTrigger className='w-full bg-neutral-200 font-medium p-1'>

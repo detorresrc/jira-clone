@@ -25,6 +25,7 @@ import { cn } from "@/lib/utils";
 import { useConfirm } from "@/hooks/use-confirm";
 import { useUpdateProject } from "../api/use-update-project";
 import { Project } from "../types";
+import { useDeleteProject } from "../api/use-delete-project";
 
 interface EditProjectFormProps {
   onCancel?: () => void;
@@ -37,6 +38,7 @@ export const EditProjectForm = ({
 }: EditProjectFormProps) => {
   const router = useRouter();
   const { mutate, isPending } = useUpdateProject();
+  const { mutate: deleteProject, isPending: isDeletingProject } = useDeleteProject();
 
   const [DeleteDialog, confirmDelete] = useConfirm(
     "Delete Project",
@@ -44,7 +46,7 @@ export const EditProjectForm = ({
     "destructive"
   );
 
-  const isPendingAny = isPending;
+  const isPendingAny = isPending || isDeletingProject;
 
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -81,6 +83,17 @@ export const EditProjectForm = ({
       form.setValue("imageUrl", file);
     }
   };
+
+  const handleDelete = async () => {
+    const ok = await confirmDelete();
+    if(!ok) return;
+
+    deleteProject({ param: { projectId: initialValues.$id } }, {
+      onSuccess: () => {
+        router.push(`/workspaces/${initialValues.workspaceId}`);
+      },
+    });
+  }
 
   return (
     <div className='flex flex-col gap-y-4'>
@@ -233,7 +246,7 @@ export const EditProjectForm = ({
           <div className='flex flex-col'>
             <h3 className='font-bold'>Danger Zone</h3>
             <p className='text-sm text-muted-foreground'>
-              Deleting projec is irreversible and will remove associated data.
+              Deleting project is irreversible and will remove associated data.
             </p>
             <DottedSeparator className='py-7' />
             <Button
@@ -242,7 +255,7 @@ export const EditProjectForm = ({
               className='w-fit ml-auto'
               size={"sm"}
               variant={"destructive"}
-              onClick={() => {}}
+              onClick={() => { handleDelete() }}
             >
               Delete Project
             </Button>

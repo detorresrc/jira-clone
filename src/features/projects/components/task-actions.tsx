@@ -9,7 +9,6 @@ import {
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
 import { useDeleteTask } from "@/features/tasks/api/use-delete-task";
-import { useWorkspaceId } from "@/features/workspaces/hooks/use-workspace-id";
 import { useConfirm } from "@/hooks/use-confirm";
 import { useEditTaskModal } from "@/features/tasks/hooks/use-edit-task-modal";
 

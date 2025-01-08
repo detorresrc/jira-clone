@@ -129,9 +129,10 @@ export const columns: ColumnDef<Task>[] = [
     cell: ({ row }) => {
       const id = row.original.$id;
       const projectId = row.original.projectId;
+      const workspaceId = row.original.workspaceId;
 
       return (
-        <TaskActions projectId={projectId} id={id}>
+        <TaskActions projectId={projectId} id={id} workspaceId={workspaceId}>
           <Button variant={"ghost"} className="size-8">
             <MoreVertical className="size-4"/>
           </Button>

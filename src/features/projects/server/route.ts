@@ -137,7 +137,7 @@ const app = new Hono()
           error: "Unauthorized"
         }, 401);
 
-      let uploadedImageUrl: string | undefined;
+      let uploadedImageUrl = null;
       if (imageUrl instanceof File) {
         const file = await storage.createFile(
           IMAGES_BUCKET_ID,
@@ -151,7 +151,7 @@ const app = new Hono()
         );
 
         uploadedImageUrl = `data:image/png;base64,${Buffer.from(arrayBuffer).toString("base64")}`;
-      } else {
+      } else if(imageUrl && imageUrl!='undefined') {
         uploadedImageUrl = imageUrl;
       }
 
@@ -161,7 +161,7 @@ const app = new Hono()
         projectId,
         {
           name,
-          imageUrl: uploadedImageUrl
+          ...(uploadedImageUrl && uploadedImageUrl!='undefined' ? {imageUrl: uploadedImageUrl} : {})
         }
       );
 

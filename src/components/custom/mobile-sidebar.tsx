@@ -22,7 +22,7 @@ export const MobileSidebar = () => {
       </SheetTrigger>
       <SheetContent side={"left"} className="p-0">
         <SheetTitle></SheetTitle>
-        <Sidebar/>
+        <Sidebar isMobile={true}/>
       </SheetContent>
     </Sheet>
   );

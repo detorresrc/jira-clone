@@ -17,10 +17,10 @@ import { ProjectAvatar } from "@/features/projects/components/project-avatar";
 import DatePicker from "@/components/custom/date-picker";
 
 interface DataFiltersProps {
-  hideDataFilters?: boolean;
+  hideProjectFilters?: boolean;
 }
 
-export const DataFilters = ({  }: DataFiltersProps) => {
+export const DataFilters = ({ hideProjectFilters }: DataFiltersProps) => {
   const workspaceId = useWorkspaceId();
 
   const { data: projects, isLoading: isProjectsLoading } = useGetProjects({
@@ -104,38 +104,45 @@ export const DataFilters = ({  }: DataFiltersProps) => {
         </SelectContent>
       </Select>
 
-      <Select defaultValue={projectId ?? undefined} onValueChange={onProjectChange}>
-        <SelectTrigger className='w-full lg:w-auto h-10'>
-          <div className='flex items-center pr-2'>
-            <FolderIcon className='size-4 mr-2' />
-            <SelectValue placeholder='Select Project' />
-          </div>
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value='all'>All Projects</SelectItem>
-          <SelectSeparator />
-          {projectsOptions?.map((project) => (
-            <SelectItem key={project.id} value={project.id}>
-              <div className='flex items-center gap-x-2'>
-                <ProjectAvatar
-                  name={project.name}
-                  image={project.imageUrl}
-                  className='size-6'
-                />
-                {project.name}
-              </div>
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      {!hideProjectFilters && (
+        <Select
+          defaultValue={projectId ?? undefined}
+          onValueChange={onProjectChange}
+        >
+          <SelectTrigger className='w-full lg:w-auto h-10'>
+            <div className='flex items-center pr-2'>
+              <FolderIcon className='size-4 mr-2' />
+              <SelectValue placeholder='Select Project' />
+            </div>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value='all'>All Projects</SelectItem>
+            <SelectSeparator />
+            {projectsOptions?.map((project) => (
+              <SelectItem key={project.id} value={project.id}>
+                <div className='flex items-center gap-x-2'>
+                  <ProjectAvatar
+                    name={project.name}
+                    image={project.imageUrl}
+                    className='size-6'
+                  />
+                  {project.name}
+                </div>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      )}
+
       <DatePicker
-        placeholder="Due Date"
-        className="h-10 w-full lg:w-auto"
+        placeholder='Due Date'
+        className='h-10 w-full lg:w-auto'
         value={dueDate ? new Date(dueDate) : undefined}
         onChange={(date) => {
           setFilters({ dueDate: date ? date.toISOString() : null });
-        }}/>
-      <div className="flex-1 flex items-center justify-end">
+        }}
+      />
+      <div className='flex-1 flex items-center justify-end'>
         {isLoading && <Loader2 className='size-6 animate-spin' />}
       </div>
     </div>

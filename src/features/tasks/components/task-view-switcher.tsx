@@ -19,9 +19,13 @@ import { DataCalendar } from "./data-calendar";
 
 interface TaskViewSwitcherProps {
   workspaceId: string;
+  hideProjectFilters?: boolean;
 }
 
-export const TaskViewSwitcher = ({ workspaceId }: TaskViewSwitcherProps) => {
+export const TaskViewSwitcher = ({ 
+  workspaceId,
+  hideProjectFilters = false
+}: TaskViewSwitcherProps) => {
   const [{ status, assignedId, projectId, dueDate }] = useTaskFilters();
 
   const [view, setView] = useQueryState("task-view", {
@@ -73,7 +77,7 @@ export const TaskViewSwitcher = ({ workspaceId }: TaskViewSwitcherProps) => {
           </Button>
         </div>
         <DottedSeparator className='my-4' />
-        <DataFilters />
+        <DataFilters hideProjectFilters={hideProjectFilters}/>
         <DottedSeparator className='my-4' />
         <div className='relative'>
           {(isBulkUpdatePending || isLoadingTasks) && (

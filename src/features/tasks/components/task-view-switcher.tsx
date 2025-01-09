@@ -15,6 +15,7 @@ import { columns } from "./columns";
 import { DataKanban } from "./data-kanban";
 import { useBulkUpdateTask } from "../api/use-bulk-update-tasks";
 import { TaksUpdatePayload } from "../types";
+import { DataCalendar } from "./data-calendar";
 
 interface TaskViewSwitcherProps {
   workspaceId: string;
@@ -97,7 +98,7 @@ export const TaskViewSwitcher = ({ workspaceId }: TaskViewSwitcherProps) => {
                 />
               </TabsContent>
               <TabsContent value='calendar' className='mt-0'>
-                {tasks?.total}
+                <DataCalendar data={tasks?.documents ?? []}/>
               </TabsContent>
             </>
           )}

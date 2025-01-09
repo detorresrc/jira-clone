@@ -1,4 +1,6 @@
 import { Models } from "node-appwrite";
+import { Project } from "../projects/types";
+import { Member } from "../members/types";
 
 export enum TaskStatus {
   BACKLOG = "BACKLOG",
@@ -24,4 +26,14 @@ export type Task = Models.Document & {
   createdById: string;
   status: TaskStatus;
   position: number;
+}
+
+export type EventCalendar = {
+  start: Date;
+  end: Date;
+  title: string;
+  project: Project;
+  assignee: Member;
+  status: TaskStatus;
+  id: string;
 }

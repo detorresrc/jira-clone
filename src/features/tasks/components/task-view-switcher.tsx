@@ -14,7 +14,7 @@ import { DataFilters } from './data-filters'
 import { useTaskFilters } from '../hooks/use-task-filters'
 import { DataTable } from './data-table'
 import { columns } from './columns'
-import { DataKanban } from './data-kanban'
+import { DataKanban, TaksUpdatePayload } from './data-kanban'
 
 interface TaskViewSwitcherProps {
   workspaceId: string
@@ -42,6 +42,11 @@ export const TaskViewSwitcher = ({
     dueDate
   });
 
+  const onKanbanDataChangeHandler = (taskUpdatePayload: TaksUpdatePayload[]) => {
+    console.log({taskUpdatePayload});
+  }
+
+  console.log({tasks});
 
   return (
     <Tabs
@@ -92,7 +97,7 @@ export const TaskViewSwitcher = ({
             <DataTable columns={columns} data={tasks?.documents ?? []}/>
           </TabsContent>
           <TabsContent value='kanban' className='mt-0'>
-            <DataKanban data={tasks?.documents ?? []} />
+            <DataKanban data={tasks?.documents ?? []} onChange={onKanbanDataChangeHandler}/>
           </TabsContent>
           <TabsContent value='calendar' className='mt-0'>
             {tasks?.total}

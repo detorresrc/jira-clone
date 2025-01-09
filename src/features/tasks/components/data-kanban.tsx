@@ -196,5 +196,3 @@ export const DataKanban = ({ data, onChange }: DataKanbanProps) => {
     </DragDropContext>
   );
 };
-export { TaksUpdatePayload };
-

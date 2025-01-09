@@ -9,7 +9,7 @@ import { useGetMembers } from "@/features/members/api/use-get-members";
 import { useGetProjects } from "@/features/projects/api/use-get-projects";
 import { useWorkspaceId } from "@/features/workspaces/hooks/use-workspace-id";
 import { SelectValue } from "@radix-ui/react-select";
-import { FolderIcon, ListCheckIcon, UserIcon } from "lucide-react";
+import { FolderIcon, ListCheckIcon, Loader2, UserIcon } from "lucide-react";
 import { TaskStatus } from "../types";
 import { useTaskFilters } from "../hooks/use-task-filters";
 import { MemberAvatar } from "@/features/members/components/member-avatar";
@@ -135,6 +135,9 @@ export const DataFilters = ({  }: DataFiltersProps) => {
         onChange={(date) => {
           setFilters({ dueDate: date ? date.toISOString() : null });
         }}/>
+      <div className="flex-1 flex items-center justify-end">
+        {isLoading && <Loader2 className='size-6 animate-spin' />}
+      </div>
     </div>
   );
 };

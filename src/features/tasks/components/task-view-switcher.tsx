@@ -26,7 +26,8 @@ export const TaskViewSwitcher = ({ workspaceId }: TaskViewSwitcherProps) => {
   const [view, setView] = useQueryState("task-view", {
     defaultValue: "table",
   });
-  const { mutate: bulkUpdate } = useBulkUpdateTask();
+  const { mutate: bulkUpdate, isPending: isBulkUpdatePending } =
+    useBulkUpdateTask();
   const { open } = useCreateTaskModal();
   const { data: tasks, isLoading: isLoadingTasks } = useGetTasks({
     workspaceId,
@@ -73,26 +74,34 @@ export const TaskViewSwitcher = ({ workspaceId }: TaskViewSwitcherProps) => {
         <DottedSeparator className='my-4' />
         <DataFilters />
         <DottedSeparator className='my-4' />
-        {isLoadingTasks ? (
-          <div className='w-full border rounded-lg h-[200px] flex flex-col items-center justify-center'>
-            <Loader2 className='size-5 animate-spin' />
-          </div>
-        ) : (
-          <>
-            <TabsContent value='table' className='mt-0'>
-              <DataTable columns={columns} data={tasks?.documents ?? []} />
-            </TabsContent>
-            <TabsContent value='kanban' className='mt-0'>
-              <DataKanban
-                data={tasks?.documents ?? []}
-                onChange={onKanbanDataChangeHandler}
-              />
-            </TabsContent>
-            <TabsContent value='calendar' className='mt-0'>
-              {tasks?.total}
-            </TabsContent>
-          </>
-        )}
+        <div className='relative'>
+          {(isBulkUpdatePending || isLoadingTasks) && (
+            <div className='w-full h-full absolute top-0 left-0 bg-white bg-opacity-50 z-10 flex items-center justify-center'>
+              <Loader2 className='size-5 animate-spin' />
+            </div>
+          )}
+
+          {isLoadingTasks ? (
+            <div className='w-full border rounded-lg h-[200px] flex flex-col items-center justify-center'>
+              <Loader2 className='size-5 animate-spin' />
+            </div>
+          ) : (
+            <>
+              <TabsContent value='table' className='mt-0'>
+                <DataTable columns={columns} data={tasks?.documents ?? []} />
+              </TabsContent>
+              <TabsContent value='kanban' className='mt-0'>
+                <DataKanban
+                  data={tasks?.documents ?? []}
+                  onChange={onKanbanDataChangeHandler}
+                />
+              </TabsContent>
+              <TabsContent value='calendar' className='mt-0'>
+                {tasks?.total}
+              </TabsContent>
+            </>
+          )}
+        </div>
       </div>
     </Tabs>
   );

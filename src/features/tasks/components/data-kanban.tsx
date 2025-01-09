@@ -8,7 +8,7 @@ import {
   DropResult,
 } from "@hello-pangea/dnd";
 
-import { Task, TaskStatus } from "../types";
+import { TaksUpdatePayload, Task, TaskStatus } from "../types";
 import { KanbanColumnHeader } from "./kanban-column-header";
 import { KanbanCard } from "./kanban-card";
 import { toast } from "sonner";
@@ -23,12 +23,6 @@ const boards: TaskStatus[] = [
 
 type TaskState = {
   [key in TaskStatus]: Task[];
-};
-
-export type TaksUpdatePayload = {
-  $id: string;
-  status: TaskStatus;
-  position: number;
 };
 
 interface DataKanbanProps {
@@ -67,12 +61,12 @@ export const DataKanban = ({ data, onChange }: DataKanbanProps) => {
     setTask(newTasks);
   }, [data]);
 
-  const updatesPayload: TaksUpdatePayload[] = [];
 
   const dragEndHandler = useCallback(
     (result: DropResult) => {
       if (!result.destination) return;
 
+      const updatesPayload: TaksUpdatePayload[] = [];
       const { source, destination } = result;
       const sourceStatus = source.droppableId as TaskStatus;
       const destinationStatus = destination.droppableId as TaskStatus;
@@ -202,3 +196,5 @@ export const DataKanban = ({ data, onChange }: DataKanbanProps) => {
     </DragDropContext>
   );
 };
+export { TaksUpdatePayload };
+

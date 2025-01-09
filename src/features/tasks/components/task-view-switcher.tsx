@@ -15,6 +15,7 @@ import { useTaskFilters } from '../hooks/use-task-filters'
 import { DataTable } from './data-table'
 import { columns } from './columns'
 import { DataKanban, TaksUpdatePayload } from './data-kanban'
+import { useBulkUpdateTask } from '../api/use-bulk-update-tasks'
 
 interface TaskViewSwitcherProps {
   workspaceId: string
@@ -33,6 +34,7 @@ export const TaskViewSwitcher = ({
   const [view, setView] = useQueryState("task-view", {
     defaultValue: "table"
   });
+  const { mutate: bulkUpdate, isPending: isBulkUpdating } = useBulkUpdateTask();
   const { open } = useCreateTaskModal();
   const { data: tasks, isLoading: isLoadingTasks } = useGetTasks({
     workspaceId,
@@ -43,10 +45,12 @@ export const TaskViewSwitcher = ({
   });
 
   const onKanbanDataChangeHandler = (taskUpdatePayload: TaksUpdatePayload[]) => {
-    console.log({taskUpdatePayload});
+    bulkUpdate({
+      json: {
+        tasks: taskUpdatePayload
+      }
+    });
   }
-
-  console.log({tasks});
 
   return (
     <Tabs

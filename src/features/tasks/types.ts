@@ -8,6 +8,12 @@ export enum TaskStatus {
   DONE = "DONE"
 }
 
+export type TaksUpdatePayload = {
+  $id: string;
+  status: TaskStatus;
+  position: number;
+};
+
 export type Task = Models.Document & {
   workspaceId: string;
   name: string;

@@ -1,16 +1,16 @@
 import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
+import { ID, Query } from "node-appwrite";
+import { z } from "zod";
 
 import { sessionMiddleware } from "@/lib/middlewares/session-middleware";
 import { createTaskSchema } from "@/features/tasks/schema";
 import { getMember } from "@/features/members/utils";
 import { Task, TaskStatus } from "../types";
-import { DATABASE_ID, MEMBERS_ID, PROJECTS_ID, TASKS_ID } from "@/config";
-import { ID, Query } from "node-appwrite";
-import { z } from "zod";
 import { Project } from "@/features/projects/types";
 import { Member } from "@/features/members/types";
 import { createAdminClient } from "@/lib/server/appwrite";
+import { DATABASE_ID, MEMBERS_ID, PROJECTS_ID, TASKS_ID } from "@/config";
 
 const app = new Hono()
   .delete(
@@ -24,13 +24,13 @@ const app = new Hono()
       const databases = c.get("databases");
 
       const { taskId } = c.req.valid("param");
-    
+
       const task = await databases.getDocument<Task>(
         DATABASE_ID,
         TASKS_ID,
         taskId
       );
-      if(!task)
+      if (!task)
         return c.json({
           error: "Task not found"
         }, 404);
@@ -101,7 +101,7 @@ const app = new Hono()
       }
 
       if (dueDate) {
-        query.push(Query.equal("dueDate", dueDate ));
+        query.push(Query.equal("dueDate", dueDate));
       }
 
       if (search) {
@@ -254,7 +254,7 @@ const app = new Hono()
         TASKS_ID,
         taskId
       );
-      if(!task)
+      if (!task)
         return c.json({
           error: "Task not found"
         }, 404);
@@ -305,7 +305,7 @@ const app = new Hono()
         TASKS_ID,
         taskId
       );
-      if(!task)
+      if (!task)
         return c.json({
           error: "Task not found"
         }, 404);
@@ -349,6 +349,69 @@ const app = new Hono()
           project,
           assignee
         }
+      });
+    }
+  )
+  .post(
+    "/bulk-update",
+    sessionMiddleware,
+    zValidator("json", z.object({
+      tasks: z.array(z.object({
+        $id: z.string(),
+        status: z.nativeEnum(TaskStatus),
+        position: z.number().int().positive().min(1000).max(1_000_000_000)
+      }))
+    })),
+    async (c) => {
+      const databases = c.get("databases");
+      const user = c.get("user");
+      const { tasks } = c.req.valid("json");
+    
+      const tasksToUpdate = await databases.listDocuments<Task>(
+        DATABASE_ID,
+        TASKS_ID,
+        [
+          Query.contains("$id", tasks.map(task => task.$id))
+        ]
+      );
+
+      const workspaceIds = new Set( tasksToUpdate.documents.map(task => task.workspaceId) );
+      if (workspaceIds.size > 1)
+        return c.json({
+          error: "Tasks must belong to the same workspace"
+        }, 400);
+
+      const workspaceId = workspaceIds.values().next().value as string;
+
+      const member = await getMember({
+        databases,
+        userId: user.$id,
+        workspaceId
+      });
+      if(!member) {
+        return c.json({
+          error: "Unauthorized"
+        }, 401);
+      }
+
+      const updatedTasks = await Promise.all(
+        tasks.map(async (task) => {
+          const { $id, position, status } = task;
+
+          return databases.updateDocument<Task>(
+            DATABASE_ID,
+            TASKS_ID,
+            $id,
+            {
+              position,
+              status
+            }
+          );
+        })
+      );
+
+      return c.json({
+        data: updatedTasks
       });
     }
   );

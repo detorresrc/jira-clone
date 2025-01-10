@@ -19,6 +19,7 @@ const TasksPage = async ({ params }: TasksPageProps) => {
       <TaskViewSwitcher
         workspaceId={workspaceId}
         hideProjectFilters={false}
+        assignedId={user.$id}
       />
     </div>
   )

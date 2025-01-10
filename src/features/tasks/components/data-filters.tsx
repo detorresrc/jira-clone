@@ -18,9 +18,13 @@ import DatePicker from "@/components/custom/date-picker";
 
 interface DataFiltersProps {
   hideProjectFilters?: boolean;
+  hideAssigneeFilters?: boolean;
 }
 
-export const DataFilters = ({ hideProjectFilters }: DataFiltersProps) => {
+export const DataFilters = ({
+  hideProjectFilters,
+  hideAssigneeFilters,
+}: DataFiltersProps) => {
   const workspaceId = useWorkspaceId();
 
   const { data: projects, isLoading: isProjectsLoading } = useGetProjects({
@@ -80,29 +84,31 @@ export const DataFilters = ({ hideProjectFilters }: DataFiltersProps) => {
         </SelectContent>
       </Select>
 
-      <Select
-        defaultValue={assignedId ?? undefined}
-        onValueChange={onAssigneeChange}
-      >
-        <SelectTrigger className='w-full lg:w-auto h-10'>
-          <div className='flex items-center pr-2'>
-            <UserIcon className='size-4 mr-2' />
-            <SelectValue placeholder='Select Assignee' />
-          </div>
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value='all'>All Assignees</SelectItem>
-          <SelectSeparator />
-          {memberOptions?.map((member) => (
-            <SelectItem key={member.id} value={member.id}>
-              <div className='flex items-center gap-x-2'>
-                <MemberAvatar name={member.name} className='size-6' />
-                {member.name}
-              </div>
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      {!hideAssigneeFilters && (
+        <Select
+          defaultValue={assignedId ?? undefined}
+          onValueChange={onAssigneeChange}
+        >
+          <SelectTrigger className='w-full lg:w-auto h-10'>
+            <div className='flex items-center pr-2'>
+              <UserIcon className='size-4 mr-2' />
+              <SelectValue placeholder='Select Assignee' />
+            </div>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value='all'>All Assignees</SelectItem>
+            <SelectSeparator />
+            {memberOptions?.map((member) => (
+              <SelectItem key={member.id} value={member.id}>
+                <div className='flex items-center gap-x-2'>
+                  <MemberAvatar name={member.name} className='size-6' />
+                  {member.name}
+                </div>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      )}
 
       {!hideProjectFilters && (
         <Select

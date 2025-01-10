@@ -30,6 +30,7 @@ import {
 import { SelectValue } from "@radix-ui/react-select";
 import { MemberAvatar } from "@/features/members/components/member-avatar";
 import { ProjectAvatar } from "@/features/projects/components/project-avatar";
+import { useProjectId } from "../hooks/use-project-id";
 
 interface CreateTaskFormProps {
   onCancel?: () => void;
@@ -43,6 +44,7 @@ export const CreateTaskForm = ({
   projectOptions,
 }: CreateTaskFormProps) => {
   const workspaceId = useWorkspaceId();
+  const projectIdFromParam = useProjectId();
   const { mutate, isPending } = useCreateTask();
 
   const form = useForm<CreateTaskSchema>({
@@ -204,8 +206,10 @@ export const CreateTaskForm = ({
                       </FormControl>
                       <FormMessage />
                       <SelectContent>
-                        {projectOptions.map((project) => (
-                          <SelectItem key={project.id} value={project.id}>
+                        {projectOptions.map((project) => {
+                          if(projectIdFromParam && project.id !== projectIdFromParam) return;
+
+                          return (<SelectItem key={project.id} value={project.id}>
                             <div className='flex items-center gap-x-2'>
                               <ProjectAvatar
                                 name={project.name}
@@ -214,8 +218,8 @@ export const CreateTaskForm = ({
                               />
                               {project.name}
                             </div>
-                          </SelectItem>
-                        ))}
+                          </SelectItem>)
+                        })}
                       </SelectContent>
                     </Select>
                   </FormItem>

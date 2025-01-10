@@ -19,14 +19,18 @@ import { DataCalendar } from "./data-calendar";
 
 interface TaskViewSwitcherProps {
   workspaceId: string;
+  projectId?: string;
   hideProjectFilters?: boolean;
+  assignedId?: string | undefined;
 }
 
 export const TaskViewSwitcher = ({ 
   workspaceId,
-  hideProjectFilters = false
+  hideProjectFilters = false,
+  assignedId = undefined,
+  projectId
 }: TaskViewSwitcherProps) => {
-  const [{ status, assignedId, projectId, dueDate }] = useTaskFilters();
+  const [{ status, assignedId: assignedIdFromFilter, projectId: projectIdFromFilter, dueDate }] = useTaskFilters();
 
   const [view, setView] = useQueryState("task-view", {
     defaultValue: "table",
@@ -37,8 +41,8 @@ export const TaskViewSwitcher = ({
   const { data: tasks, isLoading: isLoadingTasks } = useGetTasks({
     workspaceId,
     status,
-    assignedId,
-    projectId,
+    assignedId: (assignedId) ? assignedId : assignedIdFromFilter,
+    projectId: (projectId) ? projectId : projectIdFromFilter,
     dueDate,
   });
 
@@ -77,7 +81,7 @@ export const TaskViewSwitcher = ({
           </Button>
         </div>
         <DottedSeparator className='my-4' />
-        <DataFilters hideProjectFilters={hideProjectFilters}/>
+        <DataFilters hideProjectFilters={hideProjectFilters} hideAssigneeFilters={(assignedId) ? true : false}/>
         <DottedSeparator className='my-4' />
         <div className='relative'>
           {(isBulkUpdatePending || isLoadingTasks) && (

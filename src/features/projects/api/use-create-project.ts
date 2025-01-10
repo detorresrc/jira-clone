@@ -3,6 +3,7 @@ import { InferRequestType, InferResponseType } from "hono";
 import { toast } from "sonner";
 
 import { client } from "@/lib/rpc";
+import { useProjectStore } from "../store";
 
 const action = client.api.projects["$post"];
 
@@ -11,6 +12,7 @@ type RequestType = InferRequestType<typeof action>;
 
 export const useCreateProject = () => {
   const queryClient = useQueryClient();
+  const store = useProjectStore();
   
   const mutation = useMutation<
     ResponseType,
@@ -31,6 +33,12 @@ export const useCreateProject = () => {
     onError: (error) => {
       console.error(error);
       toast.error("Failed to create project");
+    },
+    onMutate: async (data) => {
+      store.setIsCreating(data.form);
+    },
+    onSettled: () => {
+      store.setIsCreating(null);
     }
   });
 

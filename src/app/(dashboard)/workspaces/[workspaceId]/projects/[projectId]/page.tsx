@@ -44,7 +44,7 @@ const ProjectIdPage = async ({ params }: ProjectIdPageProps) => {
           </Button>
         </div>
       </div>
-      <TaskViewSwitcher workspaceId={workspaceId} hideProjectFilters={true}/>
+      <TaskViewSwitcher workspaceId={workspaceId} hideProjectFilters={true} projectId={project.$id}/>
     </div>
   );
 };

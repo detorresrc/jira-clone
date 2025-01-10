@@ -26,6 +26,9 @@ export type Task = Models.Document & {
   createdById: string;
   status: TaskStatus;
   position: number;
+  
+  project?: Project;
+  assignee?: Member;
 }
 
 export type EventCalendar = {

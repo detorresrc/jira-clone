@@ -5,6 +5,9 @@ import { PageLoader } from "@/components/custom/page-loader"
 import { useGetTask } from '@/features/tasks/api/use-get-task'
 import { PageError } from '@/components/custom/page-error'
 import { TaskBreadCrumbs } from '@/features/tasks/components/task-bread-crumbs'
+import { DottedSeparator } from '@/components/custom/dotted-separator'
+import { TaskOverView } from '@/features/tasks/components/task-over-view'
+import { TaskDescription } from '@/features/tasks/components/task-description'
 
 interface TaskIdClientProps {
   workspaceId: string
@@ -28,6 +31,11 @@ export const TaskIdClient = ({
   return (
     <div className='flex flex-col'>
       <TaskBreadCrumbs project={data.project} task={data}/>
+      <DottedSeparator className='my-6'/>
+      <div className='grid grid-cols-1 lg:grid-cols-2 gap-4'>
+        <TaskOverView data={data}/>
+        <TaskDescription data={data}/>
+      </div>
     </div>
   )
 }

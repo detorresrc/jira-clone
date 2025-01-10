@@ -4,6 +4,7 @@ import { toast } from "sonner";
 
 import { client } from "@/lib/rpc";
 import { useProjectStore } from "../store";
+import { getProjectsQueryOptions } from "./use-get-projects";
 
 const action = client.api.projects["$post"];
 
@@ -20,14 +21,27 @@ export const useCreateProject = () => {
     RequestType
   >({
     mutationFn: async (args) => {
+      const existingProject = await queryClient.ensureQueryData(getProjectsQueryOptions({
+        workspaceId: args.form.workspaceId
+      }));
+      
       const response = await action(args);
 
       if(!response.ok) throw new Error("Failed to create project");
 
-      return await response.json();
+      const data = await response.json();
+      if(data){
+        const newQueryData = {
+          total: existingProject.total + 1,
+          documents: [data.data, ...existingProject.documents]
+        };
+        queryClient.setQueryData(["projects", args.form.workspaceId], newQueryData);
+        console.log({existingProject, newQueryData});
+      }
+
+      return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["projects"] });
       toast.success("Project created successfully");
     },
     onError: (error) => {

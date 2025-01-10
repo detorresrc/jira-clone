@@ -18,7 +18,7 @@ export const Projects = () => {
   const {
     data: projects,
     isLoading,
-    isFetching,
+    isFetching
   } = useGetProjects({ workspaceId });
   const { isCreating, createPayload } = useProjectStore();
   const { open } = useCreateProjectModal();

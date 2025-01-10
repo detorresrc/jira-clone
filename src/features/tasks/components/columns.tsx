@@ -46,6 +46,8 @@ export const columns: ColumnDef<Task>[] = [
     },
     cell: ({ row }) => {
       const project = row.original.project;
+      if(!project) return null;
+
       return (
         <div className="flex items-center gap-x-2 text-sm font-medium">
           <ProjectAvatar
@@ -72,10 +74,12 @@ export const columns: ColumnDef<Task>[] = [
     },
     cell: ({ row }) => {
       const assignee = row.original.assignee;
+      if(!assignee) return null;
+
       return (
         <div className="flex items-center gap-x-2 text-sm font-medium">
           <MemberAvatar
-            name={assignee.name}
+            name={assignee.name || ""}
             className="size-6"
             fallbackClassName="text-xs"
           />

@@ -30,7 +30,7 @@ export const KanbanCard = ({
 
       <div className="flex items-center gap-x-2">
         <MemberAvatar
-          name={task.assignee?.name}
+          name={task.assignee?.name || ""}
           fallbackClassName="text-[10px]"
         />
         <div className="size-1 rounded-full bg-nuetral-300"/>
@@ -38,7 +38,7 @@ export const KanbanCard = ({
       </div>
       <div className="flex items-center gap-x-2">
         <ProjectAvatar
-          name={task.project?.name}
+          name={task.project?.name || ""}
           image={task.project?.imageUrl}
           fallbackClassName="text-[10px]"
           />

@@ -10,6 +10,8 @@ import { useGetProject } from '@/features/projects/api/use-get-project'
 import { ProjectAvatar } from '@/features/projects/components/project-avatar'
 import { TaskViewSwitcher } from '@/features/tasks/components/task-view-switcher'
 import Loading from './loading'
+import { useGetProjectAnalytics } from '@/features/projects/api/use-get-project-analyutics'
+import { Analytics } from '@/components/custom/analytics'
 
 interface ProjectIdClientProps {
   projectId: string;
@@ -20,12 +22,15 @@ export const ProjectIdClient = ({
   projectId,
   workspaceId
 } : ProjectIdClientProps) => {
-  const { data: project, isLoading } = useGetProject({
+  const { data: project, isLoading: isLoadingProject } = useGetProject({
     projectId,
     workspaceId
   });
+  const { data: analytics, isLoading: isLoadingAnalytics } = useGetProjectAnalytics({ projectId });
 
-  if(isLoading)return <Loading />
+  const isLoading = isLoadingProject || isLoadingAnalytics;
+
+  if(isLoading) return <Loading />
 
   if(!project)
     return <PageError message='Project not found!'/>
@@ -50,6 +55,7 @@ export const ProjectIdClient = ({
           </Button>
         </div>
       </div>
+      {analytics && <Analytics data={analytics}/>}
       <TaskViewSwitcher workspaceId={workspaceId} hideProjectFilters={true} projectId={project.$id}/>
     </div>
   )

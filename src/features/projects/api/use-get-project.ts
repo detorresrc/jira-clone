@@ -21,7 +21,7 @@ export const getProjectQueryOptions = ({
         }
       });
 
-      if(!response.ok) throw new Error("Failed to fetch project");
+      if(!response.ok) throw new Error("Failed to fetch project analytics");
 
       const { data } = await response.json();
       return data;

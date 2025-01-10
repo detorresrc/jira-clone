@@ -3,6 +3,7 @@ import { InferRequestType, InferResponseType } from "hono";
 import { toast } from "sonner";
 
 import { client } from "@/lib/rpc";
+import { getProjectsQueryOptions } from "./use-get-projects";
 
 const action = client.api.projects[":projectId"]["$delete"];
 
@@ -24,9 +25,20 @@ export const useDeleteProject = () => {
 
       return await response.json();
     },
-    onSuccess: ({ data }) => {
-      queryClient.invalidateQueries({ queryKey: ["projects"] });
+    onSuccess: async ({ data }) => {
       queryClient.invalidateQueries({ queryKey: ["projects", data.$id] });
+
+      const existingProject = await queryClient.ensureQueryData(getProjectsQueryOptions({
+        workspaceId: data.workspaceId
+      }));
+      if(existingProject) {
+        const newQueryData = {
+          ...existingProject,
+          total: existingProject.total - 1,
+          documents: [...existingProject.documents.filter((project) => project.$id !== data.$id)]
+        };
+        queryClient.setQueryData(["projects", data.workspaceId], newQueryData);
+      }
       
       toast.success("Project deleted successfully");
     },

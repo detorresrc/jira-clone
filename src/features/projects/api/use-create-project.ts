@@ -32,11 +32,11 @@ export const useCreateProject = () => {
       const data = await response.json();
       if(data){
         const newQueryData = {
+          ...existingProject,
           total: existingProject.total + 1,
           documents: [data.data, ...existingProject.documents]
         };
         queryClient.setQueryData(["projects", args.form.workspaceId], newQueryData);
-        console.log({existingProject, newQueryData});
       }
 
       return data;

@@ -211,9 +211,7 @@ const app = new Hono()
       );
 
       return c.json({
-        data: {
-          $id: projectId
-        }
+        data: currentProject
       });
     }
   );

@@ -3,6 +3,7 @@ import { InferRequestType, InferResponseType } from "hono";
 import { toast } from "sonner";
 
 import { client } from "@/lib/rpc";
+import { getProjectsQueryOptions } from "./use-get-projects";
 
 const action = client.api.projects[':projectId']["$patch"];
 
@@ -18,16 +19,32 @@ export const useUpdateProject = () => {
     RequestType
   >({
     mutationFn: async (args) => {
+      const existingProject = await queryClient.ensureQueryData(getProjectsQueryOptions({
+        workspaceId: args.form.workspaceId || ""
+      }));
+
       const response = await action(args);
 
       if(!response.ok) throw new Error("Failed to update project");
 
-      return await response.json();
+      const data = await response.json();
+      const project = data.data;
+
+      if(existingProject && project){
+        const newQueryData = {
+          ...existingProject,
+          total: existingProject.total + 1,
+          documents: [...existingProject.documents.map(proj => proj.$id === project.$id ? project : proj)]
+        };
+        queryClient.setQueryData(["projects", project.workspaceId], newQueryData);
+      }
+      if(project){
+        queryClient.setQueryData(["projects", project.workspaceId, project.$id], project);
+      }
+
+      return data;
     },
-    onSuccess: ({ data }) => {
-      queryClient.invalidateQueries({ queryKey: ["projects"] });
-      queryClient.invalidateQueries({ queryKey: ["projects", data.$id] });
-      
+    onSuccess: () => {
       toast.success("Project updated successfully");
     },
     onError: (error) => {

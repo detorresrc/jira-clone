@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { cache } from 'hono/cache'
 import { zValidator } from "@hono/zod-validator";
 import { z } from "zod";
 import { ID, Query } from "node-appwrite";
@@ -9,6 +10,7 @@ import { DATABASE_ID, IMAGES_BUCKET_ID, PROJECTS_ID } from "@/config";
 
 import { Project } from "../types";
 import { createProjectSchema, updateProjectSchema } from "../schema";
+import { createAdminClient } from "@/lib/server/appwrite";
 
 const app = new Hono()
   .get(
@@ -103,8 +105,8 @@ const app = new Hono()
           error: "Unauthorized"
         }, 401);
 
-      let uploadedImageUrl: string | undefined;
-      let imageId: string | undefined;
+      let uploadedImageUrl  = null;
+      let imageId = null;
 
       if (imageUrl instanceof File) {
         const file = await storage.createFile(
@@ -113,12 +115,7 @@ const app = new Hono()
           imageUrl
         );
 
-        const arrayBuffer = await storage.getFilePreview(
-          IMAGES_BUCKET_ID,
-          file.$id
-        );
-
-        uploadedImageUrl = `data:image/png;base64,${Buffer.from(arrayBuffer).toString("base64")}`;
+        uploadedImageUrl = `/api/projects/background-image/${file.$id}`;
         imageId = file.$id;
       }
 
@@ -162,6 +159,16 @@ const app = new Hono()
           error: "Project not found"
         }, 404);
 
+      const oldProject = await databases.getDocument<Project>(
+        DATABASE_ID,
+        PROJECTS_ID,
+        projectId
+      );
+      if (!oldProject)
+        return c.json({
+          error: "Project not found"
+        }, 404);
+
       // Check if the user is an admin of the workspace
       const member = await getMember({
         databases,
@@ -173,7 +180,8 @@ const app = new Hono()
           error: "Unauthorized"
         }, 401);
 
-      let uploadedImageUrl = null;
+      let uploadedImageUrl = oldProject.imageUrl;
+      let imageId = oldProject.imageId;
       if (imageUrl instanceof File) {
         const file = await storage.createFile(
           IMAGES_BUCKET_ID,
@@ -181,14 +189,8 @@ const app = new Hono()
           imageUrl
         );
 
-        const arrayBuffer = await storage.getFilePreview(
-          IMAGES_BUCKET_ID,
-          file.$id
-        );
-
-        uploadedImageUrl = `data:image/png;base64,${Buffer.from(arrayBuffer).toString("base64")}`;
-      } else if(imageUrl && imageUrl!='undefined') {
-        uploadedImageUrl = imageUrl;
+        uploadedImageUrl = `/api/projects/background-image/${file.$id}`;
+        imageId = file.$id;
       }
 
       const project = await databases.updateDocument<Project>(
@@ -197,7 +199,8 @@ const app = new Hono()
         projectId,
         {
           name,
-          ...(uploadedImageUrl && uploadedImageUrl!='undefined' ? {imageUrl: uploadedImageUrl} : {})
+          imageId,
+          imageUrl: uploadedImageUrl,
         }
       );
 
@@ -250,6 +253,25 @@ const app = new Hono()
         data: currentProject
       });
     }
-  );
+  )
+  .get(
+    "/background-image/:imageId",
+    cache({
+      cacheName: 'background-image',
+      cacheControl: 'public, max-age=3600'
+    }),
+    async (c) => {
+      const { imageId } = c.req.param();
+      const { storage } = await createAdminClient();
+
+      const arrayBuffer = await storage.getFilePreview(
+        IMAGES_BUCKET_ID,
+        imageId
+      );
+
+      return c.body(arrayBuffer, 200);
+    }
+  )
+  ;
 
 export default app;

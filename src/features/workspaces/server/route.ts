@@ -1,8 +1,10 @@
 import { Hono } from "hono";
+import { cache } from 'hono/cache'
 import { zValidator } from "@hono/zod-validator";
 
 import { DATABASE_ID, IMAGES_BUCKET_ID, MEMBERS_ID, WORKSPACE_ID } from "@/config";
 import { ID, Query } from "node-appwrite";
+import { z } from "zod";
 
 import { createWorkspaceSchema, updateWorkspaceSchema } from "../schema";
 import { sessionMiddleware } from "@/lib/middlewares/session-middleware";
@@ -10,7 +12,8 @@ import { MemberRole } from "@/features/members/types";
 import { generateInviteCode } from "@/lib/utils";
 import { getMember, getMembers } from "@/features/members/utils";
 import { getMembersWorkspace, getWorkspace } from "./queries";
-import { z } from "zod";
+import { Workspace } from "../types";
+import { createAdminClient } from "@/lib/server/appwrite";
 
 const app = new Hono()
   .get(
@@ -56,6 +59,45 @@ const app = new Hono()
       });
     }
   )
+  .get(
+    "/:workspaceId",
+    sessionMiddleware,
+    zValidator("param", z.object({
+      workspaceId: z.string()
+    })),
+    async (c) => {
+      const { workspaceId } = c.req.valid("param");
+      const user = c.get("user");
+      const databases = c.get("databases");
+
+      const workspace = await databases.getDocument<Workspace>(
+        DATABASE_ID,
+        WORKSPACE_ID,
+        workspaceId
+      );
+      if(!workspace)
+        return c.json({
+          error: "Workspace not found"
+        }, 404);
+
+      const documentMembers = await databases.listDocuments(
+        DATABASE_ID,
+        MEMBERS_ID,
+        [
+          Query.equal("userId", user.$id),
+          Query.equal("workspaceId", workspaceId)
+        ]
+      );
+      if(documentMembers.total === 0)
+        return c.json({
+          error: "Unauthorized"
+        }, 404);
+
+      return c.json({
+        data: workspace
+      });
+    }
+  )
   .post(
     "/",
     sessionMiddleware,
@@ -75,14 +117,8 @@ const app = new Hono()
           ID.unique(),
           imageUrl
         );
-        console.log({file});
 
-        const arrayBuffer = await storage.getFilePreview(
-          IMAGES_BUCKET_ID,
-          file.$id
-        );
-
-        uploadedImageUrl = `data:image/png;base64,${Buffer.from(arrayBuffer).toString("base64")}`;
+        uploadedImageUrl = `/api/workspaces/background-image/${file.$id}`;
         imageId = file.$id;
       }
 
@@ -138,7 +174,19 @@ const app = new Hono()
           error: "You are not allowed to update this workspace"
         }, 401);
 
-      let uploadedImageUrl: string | undefined;
+      const oldWorkspace = await databases.getDocument<Workspace>(
+        DATABASE_ID,
+        WORKSPACE_ID,
+        workspaceId
+      );
+      if(!oldWorkspace)
+        return c.json({
+          error: "Workspace not found"
+        }, 404);
+
+      let uploadedImageUrl = oldWorkspace.imageUrl;
+      let imageId = oldWorkspace.imageId;
+
       if(imageUrl instanceof File){
         const file = await storage.createFile(
           IMAGES_BUCKET_ID,
@@ -146,14 +194,8 @@ const app = new Hono()
           imageUrl
         );
 
-        const arrayBuffer = await storage.getFilePreview(
-          IMAGES_BUCKET_ID,
-          file.$id
-        );
-
-        uploadedImageUrl = `data:image/png;base64,${Buffer.from(arrayBuffer).toString("base64")}`;
-      } else{
-        uploadedImageUrl = imageUrl;
+        uploadedImageUrl = `/api/workspaces/background-image/${file.$id}`;
+        imageId = file.$id;
       }
 
       const workspace = await databases.updateDocument(
@@ -162,7 +204,8 @@ const app = new Hono()
         workspaceId,
         {
           name,
-          imageUrl: uploadedImageUrl
+          imageId,
+          imageUrl: uploadedImageUrl,
         }
       );
       
@@ -333,6 +376,24 @@ const app = new Hono()
       return c.json({
         data: workspace
       });
+    }
+  )
+  .get(
+    "/background-image/:imageId",
+    cache({
+      cacheName: 'background-image',
+      cacheControl: 'public, max-age=3600'
+    }),
+    async (c) => {
+      const { imageId } = c.req.param();
+      const { storage } = await createAdminClient();
+
+      const arrayBuffer = await storage.getFilePreview(
+        IMAGES_BUCKET_ID,
+        imageId
+      );
+
+      return c.body(arrayBuffer, 200);
     }
   );
 

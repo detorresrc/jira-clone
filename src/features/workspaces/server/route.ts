@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import { cache } from 'hono/cache'
 import { zValidator } from "@hono/zod-validator";
 
-import { DATABASE_ID, IMAGES_BUCKET_ID, MEMBERS_ID, WORKSPACE_ID } from "@/config";
+import { DATABASE_ID, IMAGES_BUCKET_ID, MEMBERS_ID, TASKS_ID, WORKSPACE_ID } from "@/config";
 import { ID, Query } from "node-appwrite";
 import { z } from "zod";
 
@@ -14,6 +14,8 @@ import { getMember, getMembers } from "@/features/members/utils";
 import { getMembersWorkspace, getWorkspace } from "./queries";
 import { Workspace } from "../types";
 import { createAdminClient } from "@/lib/server/appwrite";
+import { endOfMonth, startOfMonth, subMonths } from "date-fns";
+import { TaskStatus } from "@/features/tasks/types";
 
 const app = new Hono()
   .get(
@@ -28,7 +30,7 @@ const app = new Hono()
         MEMBERS_ID,
         [Query.equal("userId", user.$id)]
       );
-      if(documentMembers.total === 0)
+      if (documentMembers.total === 0)
         return c.json({
           data: {
             documents: [],
@@ -46,7 +48,7 @@ const app = new Hono()
           Query.contains("$id", workspaceIds)]
       );
 
-      if(workspaces.total === 0)
+      if (workspaces.total === 0)
         return c.json({
           data: {
             documents: [],
@@ -75,7 +77,7 @@ const app = new Hono()
         WORKSPACE_ID,
         workspaceId
       );
-      if(!workspace)
+      if (!workspace)
         return c.json({
           error: "Workspace not found"
         }, 404);
@@ -88,7 +90,7 @@ const app = new Hono()
           Query.equal("workspaceId", workspaceId)
         ]
       );
-      if(documentMembers.total === 0)
+      if (documentMembers.total === 0)
         return c.json({
           error: "Unauthorized"
         }, 404);
@@ -111,7 +113,7 @@ const app = new Hono()
       let uploadedImageUrl: string | undefined;
       let imageId: string | undefined;
 
-      if(imageUrl instanceof File){
+      if (imageUrl instanceof File) {
         const file = await storage.createFile(
           IMAGES_BUCKET_ID,
           ID.unique(),
@@ -158,7 +160,7 @@ const app = new Hono()
     async (c) => {
       const { workspaceId } = c.req.param();
       const { name, imageUrl } = c.req.valid("form");
-      
+
       const databases = c.get("databases");
       const storage = c.get("storage");
       const user = c.get("user");
@@ -169,7 +171,7 @@ const app = new Hono()
         userId: user.$id,
         workspaceId
       });
-      if(!member || member.role !== MemberRole.ADMIN)
+      if (!member || member.role !== MemberRole.ADMIN)
         return c.json({
           error: "You are not allowed to update this workspace"
         }, 401);
@@ -179,7 +181,7 @@ const app = new Hono()
         WORKSPACE_ID,
         workspaceId
       );
-      if(!oldWorkspace)
+      if (!oldWorkspace)
         return c.json({
           error: "Workspace not found"
         }, 404);
@@ -187,7 +189,7 @@ const app = new Hono()
       let uploadedImageUrl = oldWorkspace.imageUrl;
       let imageId = oldWorkspace.imageId;
 
-      if(imageUrl instanceof File){
+      if (imageUrl instanceof File) {
         const file = await storage.createFile(
           IMAGES_BUCKET_ID,
           ID.unique(),
@@ -208,7 +210,7 @@ const app = new Hono()
           imageUrl: uploadedImageUrl,
         }
       );
-      
+
       return c.json({
         data: workspace
       });
@@ -228,7 +230,7 @@ const app = new Hono()
         userId: user.$id,
         workspaceId
       });
-      if(!member || member.role !== MemberRole.ADMIN)
+      if (!member || member.role !== MemberRole.ADMIN)
         return c.json({
           error: "You are not allowed to delete this workspace"
         }, 401);
@@ -236,20 +238,20 @@ const app = new Hono()
       const workspace = await getMembersWorkspace({
         workspaceId
       });
-      if(!workspace)
+      if (!workspace)
         return c.json({
           error: "Workspace not found"
         }, 404);
 
       // TODO: Delete projects, and tasks
-      
+
       // Delete Members
       const membersIds = (await getMembers({
         databases,
         workspaceId
       })).map((doc) => doc.$id);
-      if(membersIds){
-        for(const memberId of membersIds){
+      if (membersIds) {
+        for (const memberId of membersIds) {
           await databases.deleteDocument(
             DATABASE_ID,
             MEMBERS_ID,
@@ -259,7 +261,7 @@ const app = new Hono()
       }
 
       // Delete Bucket
-      if(workspace.imageId)
+      if (workspace.imageId)
         await storage.deleteFile(IMAGES_BUCKET_ID, workspace.imageId);
 
       // Delete Workspace
@@ -289,7 +291,7 @@ const app = new Hono()
         userId: user.$id,
         workspaceId
       });
-      if(!member || member.role !== MemberRole.ADMIN)
+      if (!member || member.role !== MemberRole.ADMIN)
         return c.json({
           error: "You are not allowed to reset the invite code"
         }, 401);
@@ -297,7 +299,7 @@ const app = new Hono()
       const workspace = await getMembersWorkspace({
         workspaceId
       });
-      if(!workspace)
+      if (!workspace)
         return c.json({
           error: "Workspace not found"
         }, 404);
@@ -340,7 +342,7 @@ const app = new Hono()
         workspaceId
       });
 
-      if(member){
+      if (member) {
         return c.json({
           error: "You are already a member of this workspace"
         }, 400);
@@ -350,13 +352,13 @@ const app = new Hono()
         workspaceId
       });
 
-      if(!workspace){
+      if (!workspace) {
         return c.json({
           error: "Workspace not found"
         }, 404);
       }// if(!workspace)
 
-      if(workspace.inviteCode !== inviteCode){
+      if (workspace.inviteCode !== inviteCode) {
         return c.json({
           error: "Invalid invite code"
         }, 400);
@@ -394,6 +396,178 @@ const app = new Hono()
       );
 
       return c.body(arrayBuffer, 200);
+    }
+  )
+  .get(
+    "/:workspaceId/analytics",
+    sessionMiddleware,
+    zValidator("param", z.object({
+      workspaceId: z.string()
+    })),
+    async (c) => {
+      const { workspaceId } = c.req.valid("param");
+      const databases = c.get("databases");
+      const user = c.get("user");
+
+      const currentWorkspace = await databases.getDocument<Workspace>(
+        DATABASE_ID,
+        WORKSPACE_ID,
+        workspaceId
+      );
+      if (!currentWorkspace)
+        return c.json({
+          error: "Project not found"
+        }, 404);
+
+      const member = await getMember({
+        databases,
+        userId: user.$id,
+        workspaceId: workspaceId
+      });
+      if (!member)
+        return c.json({
+          error: "Unauthorized"
+        }, 401);
+
+      const now = new Date();
+      const thisMonthStart = startOfMonth(now);
+      const thisMonthEnd = endOfMonth(now);
+      const lastMonthStart = startOfMonth(subMonths(now, 1));
+      const lastMonthEnd = endOfMonth(subMonths(now, 1));
+
+      const thisMonthTasks = await databases.listDocuments(
+        DATABASE_ID,
+        TASKS_ID,
+        [
+          Query.equal("workspaceId", workspaceId),
+          Query.greaterThanEqual("$createdAt", thisMonthStart.toISOString()),
+          Query.lessThanEqual("$createdAt", thisMonthEnd.toISOString())
+        ]
+      );
+      const lastMonthTasks = await databases.listDocuments(
+        DATABASE_ID,
+        TASKS_ID,
+        [
+          Query.equal("workspaceId", workspaceId),
+          Query.greaterThanEqual("$createdAt", lastMonthStart.toISOString()),
+          Query.lessThanEqual("$createdAt", lastMonthEnd.toISOString())
+        ]
+      );
+      const taskCount = thisMonthTasks.total;
+      const taskDifference = taskCount - lastMonthTasks.total;
+
+      //----------------------------------------------------------------------------------------
+      const thisMonthAssignedTasks = await databases.listDocuments(
+        DATABASE_ID,
+        TASKS_ID,
+        [
+          Query.equal("workspaceId", workspaceId),
+          Query.equal("assignedId", user.$id),
+          Query.greaterThanEqual("$createdAt", thisMonthStart.toISOString()),
+          Query.lessThanEqual("$createdAt", thisMonthEnd.toISOString())
+        ]
+      );
+      const lastMonthAssignedTasks = await databases.listDocuments(
+        DATABASE_ID,
+        TASKS_ID,
+        [
+          Query.equal("workspaceId", workspaceId),
+          Query.equal("assignedId", user.$id),
+          Query.greaterThanEqual("$createdAt", lastMonthStart.toISOString()),
+          Query.lessThanEqual("$createdAt", lastMonthEnd.toISOString())
+        ]
+      );
+      const assignedTaskCount = thisMonthAssignedTasks.total;
+      const assignedTaskDifference = assignedTaskCount - lastMonthAssignedTasks.total;
+
+      //----------------------------------------------------------------------------------------
+      const thisMonthIncompleteTasks = await databases.listDocuments(
+        DATABASE_ID,
+        TASKS_ID,
+        [
+          Query.equal("workspaceId", workspaceId),
+          Query.notEqual("status", TaskStatus.DONE),
+          Query.greaterThanEqual("$createdAt", thisMonthStart.toISOString()),
+          Query.lessThanEqual("$createdAt", thisMonthEnd.toISOString())
+        ]
+      );
+      const lastMonthIncompleteTasks = await databases.listDocuments(
+        DATABASE_ID,
+        TASKS_ID,
+        [
+          Query.equal("workspaceId", workspaceId),
+          Query.notEqual("status", TaskStatus.DONE),
+          Query.greaterThanEqual("$createdAt", lastMonthStart.toISOString()),
+          Query.lessThanEqual("$createdAt", lastMonthEnd.toISOString())
+        ]
+      );
+      const incompleteTaskCount = thisMonthIncompleteTasks.total;
+      const incompleteTaskDifference = incompleteTaskCount - lastMonthIncompleteTasks.total;
+
+      //----------------------------------------------------------------------------------------
+      const thisMonthCompletedTasks = await databases.listDocuments(
+        DATABASE_ID,
+        TASKS_ID,
+        [
+          Query.equal("workspaceId", workspaceId),
+          Query.equal("status", TaskStatus.DONE),
+          Query.greaterThanEqual("$createdAt", thisMonthStart.toISOString()),
+          Query.lessThanEqual("$createdAt", thisMonthEnd.toISOString())
+        ]
+      );
+      const lastMonthCompletedTasks = await databases.listDocuments(
+        DATABASE_ID,
+        TASKS_ID,
+        [
+          Query.equal("workspaceId", workspaceId),
+          Query.notEqual("status", TaskStatus.DONE),
+          Query.greaterThanEqual("$createdAt", lastMonthStart.toISOString()),
+          Query.lessThanEqual("$createdAt", lastMonthEnd.toISOString())
+        ]
+      );
+      const completedTaskCount = thisMonthCompletedTasks.total;
+      const completedTaskDifference = completedTaskCount - lastMonthCompletedTasks.total;
+
+      //----------------------------------------------------------------------------------------
+      const thisMonthOverDueTasks = await databases.listDocuments(
+        DATABASE_ID,
+        TASKS_ID,
+        [
+          Query.equal("workspaceId", workspaceId),
+          Query.notEqual("status", TaskStatus.DONE),
+          Query.lessThan("dueDate", now.toISOString()),
+          Query.greaterThanEqual("$createdAt", thisMonthStart.toISOString()),
+          Query.lessThanEqual("$createdAt", thisMonthEnd.toISOString())
+        ]
+      );
+      const lastMonthOverDueTasks = await databases.listDocuments(
+        DATABASE_ID,
+        TASKS_ID,
+        [
+          Query.equal("workspaceId", workspaceId),
+          Query.notEqual("status", TaskStatus.DONE),
+          Query.lessThan("dueDate", now.toISOString()),
+          Query.greaterThanEqual("$createdAt", lastMonthStart.toISOString()),
+          Query.lessThanEqual("$createdAt", lastMonthEnd.toISOString())
+        ]
+      );
+      const overDueTaskCount = thisMonthOverDueTasks.total;
+      const overDueTaskDifference = overDueTaskCount - lastMonthOverDueTasks.total;
+
+      return c.json({
+        data: {
+          taskCount,
+          taskDifference,
+          assignedTaskCount,
+          assignedTaskDifference,
+          completedTaskCount,
+          completedTaskDifference,
+          incompleteTaskCount,
+          incompleteTaskDifference,
+          overDueTaskCount,
+          overDueTaskDifference
+        }
+      });
     }
   );
 

@@ -4,8 +4,8 @@ import { FcGoogle } from "react-icons/fc";
 import { FaGithub } from "react-icons/fa";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { signUpWithGithub, signUpWithGoogle } from "@/lib/oauth";
 
+import { signUpWithGithub, signUpWithGoogle } from "@/lib/oauth";
 import { DottedSeparator } from "@/components/custom/dotted-separator";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";

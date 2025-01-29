@@ -4,6 +4,7 @@ import { FcGoogle } from "react-icons/fc";
 import { FaGithub } from "react-icons/fa";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
+import { signUpWithGithub } from "@/lib/oauth";
 
 import { DottedSeparator } from "@/components/custom/dotted-separator";
 import { Button } from "@/components/ui/button";
@@ -108,6 +109,7 @@ export const SignInCard = () => {
           size={"lg"}
           className='w-full'
           disabled={isPending}
+          onClick={signUpWithGithub}
         >
           <FaGithub className='mr-2 size-5' />
           Login with Github

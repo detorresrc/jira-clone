@@ -63,7 +63,7 @@ export const MembersList = ({ workspaceId, currentUser }: MembersListProps) => {
     });
   };
 
-  const handleDeleteMember = async (memberid: string, isLeave: boolean = false) => {
+  const handleDeleteMember = async (memberId: string, isLeave: boolean = false) => {
     let ok: unknown;
     
     if(!isLeave) ok = await confirmDelete();
@@ -72,7 +72,7 @@ export const MembersList = ({ workspaceId, currentUser }: MembersListProps) => {
     if (ok) {
       deleteMember({
         param: {
-          memberId: memberid,
+          memberId: memberId,
         },
       });
     }

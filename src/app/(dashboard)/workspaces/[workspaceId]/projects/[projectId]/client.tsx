@@ -2,16 +2,15 @@
 
 import { Pencil } from 'lucide-react'
 import Link from 'next/link'
-import React from 'react'
 
 import { PageError } from '@/components/custom/page-error'
 import { Button } from '@/components/ui/button'
 import { useGetProject } from '@/features/projects/api/use-get-project'
 import { ProjectAvatar } from '@/features/projects/components/project-avatar'
 import { TaskViewSwitcher } from '@/features/tasks/components/task-view-switcher'
-import Loading from './loading'
-import { useGetProjectAnalytics } from '@/features/projects/api/use-get-project-analyutics'
+import { useGetProjectAnalytics } from '@/features/projects/api/use-get-project-analytics'
 import { Analytics } from '@/components/custom/analytics'
+import Loading from './loading'
 
 interface ProjectIdClientProps {
   projectId: string;
@@ -55,7 +54,7 @@ export const ProjectIdClient = ({
           </Button>
         </div>
       </div>
-      {analytics && <Analytics data={analytics}/>}
+      {analytics && <Analytics {...analytics}/>}
       <TaskViewSwitcher workspaceId={workspaceId} hideProjectFilters={true} projectId={project.$id}/>
     </div>
   )

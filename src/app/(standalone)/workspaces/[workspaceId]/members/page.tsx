@@ -2,15 +2,15 @@ import { getCurrentUser } from '@/features/auth/server/queries';
 import { MembersList } from '@/features/workspaces/components/members-list';
 import { redirect } from 'next/navigation';
 
-interface WorkdspaceIdMembersPageProps {
+interface WorkspaceIdMembersPageProps {
   params: Promise<{ 
     workspaceId: string
   }>
 }
 
-const WorkdspaceIdMembersPage = async ({
+const WorkspaceIdMembersPage = async ({
   params
-}: WorkdspaceIdMembersPageProps) => {
+}: WorkspaceIdMembersPageProps) => {
   const user = await getCurrentUser();
   if(!user) redirect("/sign-in");
 
@@ -25,4 +25,4 @@ const WorkdspaceIdMembersPage = async ({
   )
 }
 
-export default WorkdspaceIdMembersPage
+export default WorkspaceIdMembersPage

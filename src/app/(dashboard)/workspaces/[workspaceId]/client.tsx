@@ -1,7 +1,9 @@
 "use client";
 
-import { Calendar, PlusIcon } from "lucide-react";
+import { Calendar, PlusIcon, SettingsIcon } from "lucide-react";
 import React from "react";
+import Link from "next/link";
+import { formatDistanceToNow } from "date-fns";
 
 import { Analytics } from "@/components/custom/analytics";
 import { DottedSeparator } from "@/components/custom/dotted-separator";
@@ -13,13 +15,14 @@ import { useGetProjects } from "@/features/projects/api/use-get-projects";
 import { useGetTasks } from "@/features/tasks/api/use-get-tasks";
 import { useCreateTaskModal } from "@/features/tasks/hooks/use-create-task-modal";
 import { Task } from "@/features/tasks/types";
-import { useGetWorkspaceAnalytics } from "@/features/workspaces/api/use-get-workspace-analyutics";
-import { useCreateWorkspaceModal } from "@/features/workspaces/hooks/use-create-workspace-modal";
-import Link from "next/link";
+import { useGetWorkspaceAnalytics } from "@/features/workspaces/api/use-get-workspace-analytics";
 import { Card, CardContent } from "@/components/ui/card";
-import { formatDistanceToNow } from "date-fns";
 import { Project } from "@/features/projects/types";
 import { ProjectAvatar } from "@/features/projects/components/project-avatar";
+import { useCreateProjectModal } from "@/features/projects/hooks/use-create-project-modal";
+import { Member } from "@/features/members/types";
+import { useWorkspaceId } from "@/features/workspaces/hooks/use-workspace-id";
+import { MemberAvatar } from "@/features/members/components/member-avatar";
 
 interface WorkspaceIdClientProps {
   workspaceId: string;
@@ -52,10 +55,11 @@ export const WorkspaceIdClient = ({ workspaceId }: WorkspaceIdClientProps) => {
 
   return (
     <div className='h-full flex flex-col space-y-4'>
-      <Analytics data={analytics} />
+      <Analytics {...analytics} />
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
         <TaskList workspaceId={workspaceId} tasks={tasks.documents} total={analytics.taskCount}/>
-        <ProjectList workspaceId={workspaceId} data={projects.documents} total={0}/>
+        <ProjectList workspaceId={workspaceId} data={projects.documents} total={projects.total}/>
+        <MemberList data={members.documents} total={members.documents.length}/>
       </div>
     </div>
   );
@@ -92,7 +96,7 @@ export const TaskList = ({ tasks, total, workspaceId } : TaskListProps) => {
                     <p className="text-lg font-medium truncate">{task.name}</p>
                     <div className="flex items-center">
                       <p>{task.project?.name}</p>
-                      <div className="size-1 rounded-full bg-nuetral-300"/>
+                      <div className="size-1 rounded-full bg-neutral-300"/>
                       <div className="text-sm text-muted-foreground flex items-center">
                         <Calendar className="size-3 mr-1"/>
                         <span className="truncate">{formatDistanceToNow(new Date(task.dueDate))}</span>
@@ -121,7 +125,7 @@ interface ProjectListProps {
   workspaceId: string;
 }
 export const ProjectList = ({ data, total, workspaceId } : ProjectListProps) => {
-  const { open: createWorkspace } = useCreateWorkspaceModal();
+  const { open: createProject } = useCreateProjectModal();
 
   return (
     <div className="flex flex-col gap-y-4 col-span-1">
@@ -130,7 +134,7 @@ export const ProjectList = ({ data, total, workspaceId } : ProjectListProps) => 
           <p className="text-large font-semibold">
             Projects ({total})
           </p>
-          <Button variant={"muted"} size={"icon"} onClick={createWorkspace}>
+          <Button variant={"muted"} size={"icon"} onClick={createProject}>
             <PlusIcon className="size-4 text-neutral-400" />
           </Button>
         </div>
@@ -154,7 +158,59 @@ export const ProjectList = ({ data, total, workspaceId } : ProjectListProps) => 
               </Link>
             </li>
           ))}
-          <li className="text-sm text-muted-foreground text-center hidden first-of-type:block">No project found</li>
+          <li className="text-sm text-muted-foreground text-center hidden first-of-type:block">No projects found</li>
+        </ul>
+      </div>
+    </div>
+  );
+}
+
+interface MemberListProps {
+  data: Member[],
+  total: number
+}
+export const MemberList = ({
+  data,
+  total
+} : MemberListProps) => {
+  const workspaceId = useWorkspaceId();
+
+  return (
+    <div className="flex flex-col gap-y-4 col-span-1">
+      <div className="bg-white border rounded-lg p-4">
+        <div className="flex items-center justify-between">
+          <p className="text-large font-semibold">
+            Members ({total})
+          </p>
+          <Button asChild variant={"muted"} size={"icon"}>
+            <Link href={`/workspaces/${workspaceId}/members`}>
+              <SettingsIcon className="size-4 text-neutral-400" />
+            </Link>
+          </Button>
+        </div>
+        <DottedSeparator className="my-4"/>
+        <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {data.map((member) => (
+            <li key={member.$id}>
+              <Card className="shadow-none rounded-lg overflow-hidden">
+                <CardContent className="p-3 flex flex-col items-center gap-x-2">
+                  <MemberAvatar
+                    className="size-12"
+                    fallbackClassName="text-lg"
+                    name={member.name || ""}/>
+                  <div className="flex flex-col items-center overflow-hidden">
+                    <p className="text-lg font-medium line-clamp-1">
+                      {member.name}
+                    </p>
+                    <p className="text-sm text-muted line-clamp-1">
+                      {member.email}
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            </li>
+          ))}
+          <li className="text-sm text-muted-foreground text-center hidden first-of-type:block">No members found</li>
         </ul>
       </div>
     </div>

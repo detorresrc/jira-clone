@@ -2,7 +2,7 @@ import { queryOptions, useQuery } from "@tanstack/react-query";
 import { client } from "@/lib/rpc";
 import { InferResponseType } from "hono";
 
-const action = client.api.projects[':projectId']['analytics']['$get'];
+const action = client.api.projects[':projectId']['analytics-v2']['$get'];
 export type ResponseType = InferResponseType<typeof action, 200>;
 
 export const UseGetProjectAnalyticsOptions = ({
